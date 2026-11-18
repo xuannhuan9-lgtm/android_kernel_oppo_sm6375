@@ -95,6 +95,18 @@ jobs:
           mkdir -p clang-12.0.5
           tar -xzf clang-r416183b.tar.gz -C clang-12.0.5
           rm -f clang-r416183b.tar.gz
+          # 若压缩包内多一层目录，扁平化到 clang-12.0.5/bin
+          if [ ! -x clang-12.0.5/bin/clang ]; then
+            inner=$(find clang-12.0.5 -maxdepth 2 -type d -name bin | head -1)
+            if [ -n "$inner" ]; then
+              parent=$(dirname "$inner")
+              echo "flattening $parent"
+              shopt -s dotglob
+              mv "$parent"/* clang-12.0.5/
+              shopt -u dotglob
+            fi
+          fi
+          echo "=== clang ==="; clang-12.0.5/bin/clang --version | head -2
           git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-gnu-9.3 aarch64-linux-android-9.3
           git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 arm-linux-androideabi-4.9
           mkdir -p "$ROOT/compiler/ccache-bin"
@@ -124,7 +136,14 @@ jobs:
 
       - name: Compile Kernel
         working-directory: ${{ env.ROOT }}/kernel/msm-5.4
+        env:
+          OPPO_K10X_RootPath: ${{ env.ROOT }}
         run: |
+          echo "ROOT=$OPPO_K10X_RootPath"
+          ls "$OPPO_K10X_RootPath"
+          command -v clang; clang --version | head -1
+          ls "$OPPO_K10X_RootPath/compiler/clang-12.0.5/bin/clang"
+          ls arch/arm64/configs/ | grep -i sm6375
           chmod +x build.sh
           ./build.sh
 
