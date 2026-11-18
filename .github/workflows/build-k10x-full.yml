@@ -27,8 +27,9 @@ jobs:
 
     steps:
       - name: Fast Apt Mirror
-        timeout-minutes: 5
-        run: sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/vegardit/fast-apt-mirror.sh/v1/fast-apt-mirror.sh)"
+        uses: vegardit/fast-apt-mirror.sh@v1
+        with:
+          fallback: 'yes'
 
       - name: Make Build Environment
         timeout-minutes: 25
@@ -129,7 +130,8 @@ jobs:
 
       - name: Show Ccache
         if: always()
-        run: ccache -s
+        continue-on-error: true
+        run: ccache -s || true
 
       - name: Collect Artifacts
         if: always()
