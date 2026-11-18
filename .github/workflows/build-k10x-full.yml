@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: k10x-build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Compile Kernel
@@ -22,10 +26,14 @@ jobs:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     steps:
+      - name: Fast Apt Mirror
+        timeout-minutes: 5
+        run: sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/vegardit/fast-apt-mirror.sh/v1/fast-apt-mirror.sh)"
+
       - name: Make Build Environment
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
-          sudo apt-get update
+          sudo apt-get update -o Acquire::Retries=5 -o Acquire::http::Timeout=30
           sudo apt-get install -y git wget automake flex lzop bison gperf build-essential \
             zip curl zlib1g-dev libxml2-utils bzip2 libbz2-dev squashfs-tools pngcrush \
             schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen \
@@ -158,3 +166,4 @@ jobs:
           path: ${{ env.ROOT }}/dist/modules.tar.gz
           if-no-files-found: warn
           retention-days: 7
+
